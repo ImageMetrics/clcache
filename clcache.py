@@ -63,6 +63,7 @@ MAX_MANIFEST_HASHES = 100
 # ? is invalid character for file name, so it seems ok
 # to use it as mark for relative path.
 BASEDIR_REPLACEMENT = '?'
+SOURCEDIR_REPLACEMENT = '*'
 
 # Define some Win32 API constants here to avoid dependency on win32pipe
 NMPWAIT_WAIT_FOREVER = wintypes.DWORD(0xFFFFFFFF)
@@ -271,8 +272,10 @@ class ManifestRepository(object):
 
         commandLine.extend(collapseBasedirInCmdPath(arg) for arg in inputFiles)
 
+        printTraceStatement("Hashing commandLine: {}".format(commandLine))
         additionalData = "{}|{}|{}".format(
             compilerHash, commandLine, ManifestRepository.MANIFEST_FILE_FORMAT_VERSION)
+        printTraceStatement("Hashing additionalData: {}".format(additionalData))
         return getFileHash(sourceFile, additionalData)
 
     @staticmethod
@@ -918,24 +921,34 @@ def getStringHash(dataString):
 
 def expandBasedirPlaceholder(path):
     baseDir = normalizeBaseDir(os.environ.get('CLCACHE_BASEDIR'))
+    sourceDir = normalizeBaseDir(os.environ.get('CLCACHE_SOURCEDIR'))
     if path.startswith(BASEDIR_REPLACEMENT):
         if not baseDir:
             raise LogicException('No CLCACHE_BASEDIR set, but found relative path ' + path)
         return path.replace(BASEDIR_REPLACEMENT, baseDir, 1)
+    elif path.startswith(SOURCEDIR_REPLACEMENT):
+        if not sourceDir:
+            raise LogicException('No CLCACHE_SOURCEDIR set, but found relative path ' + path)
+        return path.replace(SOURCEDIR_REPLACEMENT, sourceDir, 1)
     else:
         return path
 
 
 def collapseBasedirToPlaceholder(path):
     baseDir = normalizeBaseDir(os.environ.get('CLCACHE_BASEDIR'))
-    if baseDir is None:
+    sourceDir = normalizeBaseDir(os.environ.get('CLCACHE_SOURCEDIR'))
+    if baseDir is None and sourceDir is None:
         return path
     else:
         assert path == os.path.normcase(path)
+        if not baseDir is None:
         assert baseDir == os.path.normcase(baseDir)
         if path.startswith(baseDir):
             return path.replace(baseDir, BASEDIR_REPLACEMENT, 1)
-        else:
+        if not sourceDir is None:
+          assert sourceDir == os.path.normcase(sourceDir)
+          if path.startswith(sourceDir):
+            return path.replace(sourceDir, SOURCEDIR_REPLACEMENT, 1)
             return path
 
 
