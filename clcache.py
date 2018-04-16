@@ -942,14 +942,14 @@ def collapseBasedirToPlaceholder(path):
     else:
         assert path == os.path.normcase(path)
         if not baseDir is None:
-        assert baseDir == os.path.normcase(baseDir)
-        if path.startswith(baseDir):
+          assert baseDir == os.path.normcase(baseDir)
+          if path.startswith(baseDir):
             return path.replace(baseDir, BASEDIR_REPLACEMENT, 1)
         if not sourceDir is None:
           assert sourceDir == os.path.normcase(sourceDir)
           if path.startswith(sourceDir):
             return path.replace(sourceDir, SOURCEDIR_REPLACEMENT, 1)
-            return path
+        return path
 
 
 def ensureDirectoryExists(path):
